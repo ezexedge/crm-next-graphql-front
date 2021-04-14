@@ -4,7 +4,7 @@ const Nosotros = () => {
     return ( 
         <>
         <Layout>
-            <h1>Desde nosotros</h1>
+            <h1>Desde nosotross</h1>
         </Layout>
         </>
      );
