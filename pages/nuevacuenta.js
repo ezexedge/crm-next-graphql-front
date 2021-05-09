@@ -16,7 +16,7 @@ mutation nuevoUsuario($input: UsuarioInput){
     }
   }
 `
-
+//cambios
 const NuevaCuenta = () => {
 
     const [nuevoUsuario] = useMutation(NUEVA_CUENTA)
