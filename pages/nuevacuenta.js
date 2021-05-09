@@ -1,12 +1,31 @@
-import React from 'react';
+import React,{useState} from 'react';
+import {useRouter} from 'next/router'
 import Layout from '../components/Layout'
 import {useFormik} from 'formik'
 import * as Yup from 'yup'
+import {useQuery,gql,useMutation} from '@apollo/client'
 
+
+const NUEVA_CUENTA = gql`
+mutation nuevoUsuario($input: UsuarioInput){
+    nuevoUsuario(input:$input){
+      id
+      nombre
+      apellido
+      email
+    }
+  }
+`
 
 const NuevaCuenta = () => {
 
-    const formik = useFormik({
+    const [nuevoUsuario] = useMutation(NUEVA_CUENTA)
+    const [mensaje,guardarMensaje] = useState(null)
+
+    const router = useRouter()
+
+
+    const formik =  useFormik({
         initialValues : {
             nombre: '',
             apellido: '',
@@ -26,16 +45,59 @@ const NuevaCuenta = () => {
                             .min(6,'el password debe ser de almenos de 6 caracteres')
 
         }),
-        onSubmit: valores => {
+        onSubmit: async valores  => {
             console.log('enviando',valores)
+            const {nombre,apellido,email,password} = valores
+
+
+            try{
+              const {data} =   await nuevoUsuario({
+                    variables : {
+                        input : {
+                            nombre,
+                            apellido,
+                            email,
+                            password
+                        }
+                    }
+                })
+
+                guardarMensaje('el usuario se creo correctamente')
+
+                setTimeout(() => {
+                    guardarMensaje(null)
+                    router.push('/login')
+                },3000)
+
+
+
+            }catch(error){
+                guardarMensaje(error.message.replace('GraqhQL error: ', ''))
+                console.log(error)
+
+                setTimeout(()=> {
+                    guardarMensaje(null)
+                },3000)
+            }
         }
 
     })
 
 
+    const mostrarMensaje = () => {
+        return(
+                <div className="bg-white py-2 px-3 w-full my-3 max-w-sm text-center mx-auto">
+                    <p>{mensaje}</p>
+                </div>
+        )
+    }
+
     return ( 
         <>
         <Layout>
+
+            {mensaje && mostrarMensaje()}
+
              <h1 className="text-center text-2xl text-white font-light">Crear nueva cuenta</h1>
 
              <div className="flex justify-center mt-5">
