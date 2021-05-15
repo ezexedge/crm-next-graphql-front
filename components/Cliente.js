@@ -1,8 +1,46 @@
 import React from 'react';
 import Swal from 'sweetalert2'
+import { gql,useMutation } from '@apollo/client'
+ 
+const ELIMINAR_CLIENTE = gql`
+
+    mutation eliminarCliente($id: ID!){
+        eliminarCliente(id:$id)
+    }
+
+
+`
+
+
+const OBTENER_CLIENTES_USUARIO = gql`
+query obtenerClientesVendedor {
+  obtenerClientesVendedor{
+    id
+    nombre
+    apellido
+    empresa
+    email
+  }
+}
+
+`
+
 
 const Cliente = ({cliente}) => {
 
+
+    const [eliminarCliente] = useMutation(ELIMINAR_CLIENTE,{
+        update(cache){
+            const {obtenerClientesVendedor} = cache.readQuery({query : OBTENER_CLIENTES_USUARIO})
+
+            cache.writeQuery({
+                query: OBTENER_CLIENTES_USUARIO,
+                data: {
+                    obtenerClientesVendedor: obtenerClientesVendedor.filter(clienteActual => clienteActual.id !== id)
+                }
+            })
+        }
+    })
 
 
     const {nombre,apellido,empresa,email,id} = cliente
@@ -18,14 +56,25 @@ const Cliente = ({cliente}) => {
             confirmButtonColor: '#3085d6',
             cancelButtonColor: 'no Borrar',
             confirmButtonText: 'si Borrar'
-          }).then((result) => {
+          }).then(async (result) => {
             if (result.value) {
-                console.log('eliminando ......',id)
-              Swal.fire(
-                'Borrado!',
-                'Has borrado a un cliente',
-                'success'
-              )
+               try{
+
+                const {data} = await eliminarCliente({
+                    variables: {
+                        id
+                    }
+                })
+
+                console.log('eliminando ......',data)
+                Swal.fire(
+                  'Borrado!',
+                  'Has borrado a un cliente',
+                  'success'
+                )
+               }catch(error){
+                console.log(error)
+               }
             }
           })
 
