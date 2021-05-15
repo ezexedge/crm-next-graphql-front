@@ -15,21 +15,19 @@ const OBTENER_USUARIO = gql`
 
 const Header = () => {
 
-    const {data,loading,error} = useQuery(OBTENER_USUARIO)
+    const {data,loading,client,error} = useQuery(OBTENER_USUARIO)
 
     const router = useRouter()
 
     if(loading) return null 
 
-    const {nombre,apellido} = data.obtenerUsuario
-    
+    const { nombre, apellido } = data.obtenerUsuario;
+ 
     const cerrarSesion = () => {
-        localStorage.removeItem('token')
-        router.push('/login')
-
-
-    }
-
+      localStorage.removeItem('token');
+      client.clearStore();
+      router.push('/login');
+    };
 
     return (
         <div className="flex justify-between mb-6">
