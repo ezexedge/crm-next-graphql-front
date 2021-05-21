@@ -1,8 +1,10 @@
 import React from 'react';
 import {useRouter} from 'next/router'
 import Layout from '../../components/Layout';
-import {useQuery,gql} from '@apollo/client'
+import {useQuery,gql,useMutation} from '@apollo/client'
 import { Formik } from 'formik';
+import * as Yup from 'yup'
+import Swal from 'sweetalert2'
 
 const OBTENER_CLIENTE = gql`
 
@@ -18,6 +20,31 @@ query obtenerCliente($id:ID!){
 
 `
 
+const ACTUALIZAR_CLIENTE = gql`
+
+    mutation actualizarCliente($id: ID!,$input: ClienteInput){
+        actualizarCliente(id:$id,input:$input){
+            nombre
+            email
+        }
+    }
+
+`
+const OBTENER_CLIENTES_USUARIO = gql`
+query obtenerClientesVendedor {
+  obtenerClientesVendedor{
+    id
+    nombre
+    apellido
+    empresa
+    email
+  }
+}
+
+`
+
+
+
 function EditarCliente(props) {
 
     const router = useRouter()
@@ -31,14 +58,88 @@ function EditarCliente(props) {
         }
     })
 
+    const [actualizarCliente] = useMutation(ACTUALIZAR_CLIENTE, {
+        update(cache, { data: { actualizarCliente } }) {
+          // Actulizar Clientes
+          const { obtenerClientesVendedor } = cache.readQuery({
+            query: OBTENER_CLIENTES_USUARIO
+          });
+     
+          const clientesActualizados = obtenerClientesVendedor.map(cliente =>
+            cliente.id === id ? actualizarCliente : cliente
+          );
+     
+          cache.writeQuery({
+            query: OBTENER_CLIENTES_USUARIO,
+            data: {
+              obtenerClientesVendedor: clientesActualizados
+            }
+          });
+     
+          // Actulizar Cliente Actual
+          cache.writeQuery({
+            query: OBTENER_CLIENTE,
+            variables: { id },
+            data: {
+              obtenerCliente: actualizarCliente
+            }
+          });
+        }
+      });
+
+
+    const schemaValidacion =  Yup.object({
+            nombre : Yup.string()
+                        .required('el nombre del cliente es obligatorio'),
+            apellido: Yup.string()
+                      .required('el apellido del cliente es obligatorio'),
+            empresa: Yup.string()
+                    .required('el campo empresa es obligatorio'),
+            email: Yup.string()
+                    .email('el email no es valido')
+                    .required('el email del cliente es obligatorio')
+
+        })
+
     console.log(data,loading,error)
 
     if(loading)return 'cargando....'
 
-  console.log(data.obtenerCliente)
+  //onsole.log(data.obtenerCliente)
 
 
+  const {obtenerCliente} = data
 
+
+  const actualizarValores =  async (valores) => {
+    const {nombre,apellido,empresa,telefono,email} = valores
+
+    try{
+
+        const {data} = await actualizarCliente({
+            variables: {
+                id,
+                input : {
+                    nombre,apellido,empresa,telefono,email 
+                }
+            }
+        })
+
+        console.log(data)
+
+        Swal.fire(
+            'Actualizado',
+            'El cliente se actualizo correctamente',
+            'success'
+          )
+
+
+        router.push('/')
+
+    }catch(error){
+
+    }
+}
 
     return (
         <Layout>
@@ -49,12 +150,17 @@ function EditarCliente(props) {
             <div className="w-full max-w-lg">
 
                 <Formik
-                
+                validationSchema={schemaValidacion}
+                enableReinitialize
+                initialValues={obtenerCliente}
+                onSubmit={(valores)=>{
+                    actualizarValores(valores)
+                }}
                 >
 
 
                     {props => {
-                        console.log(props)
+                    //    console.log(props)
 
                         return(
 
@@ -78,16 +184,16 @@ function EditarCliente(props) {
                                 placeholder="Nombre cliente"
                                 onChange={props.handleChange}
                                 onBlur={props.handleBlur}
-                               // value={formik.values.nombre}
+                                value={props.values.nombre}
                                />
                     </div>
-                    { /* formik.touched.nombre && formik.errors.nombre &&
+                    { props.touched.nombre && props.errors.nombre &&
                         
                         <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                             <p className="font-bold">Error</p>
-                            <p>{formik.errors.nombre}</p>
+                            <p>{props.errors.nombre}</p>
                         </div>
-                    */}
+                    }
 
                     <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="apellido">
@@ -101,16 +207,16 @@ function EditarCliente(props) {
                                 placeholder="Apellido cliente"
                                 onChange={props.handleChange}
                                 onBlur={props.handleBlur}
-                              //  value={formik.values.apellido}
+                                value={props.values.apellido}
                                />
                     </div>
-                    { /* formik.touched.apellido && formik.errors.apellido &&
+                    {  props.touched.apellido && props.errors.apellido &&
                         
                         <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                             <p className="font-bold">Error</p>
-                            <p>{formik.errors.apellido}</p>
+                            <p>{props.errors.apellido}</p>
                         </div>
-                    */}
+                    }
 
 
                     <div className="mb-4">
@@ -126,16 +232,16 @@ function EditarCliente(props) {
 
                                 onChange={props.handleChange}
                                 onBlur={props.handleBlur}
-                               // value={formik.values.empresa}
+                                value={props.values.empresa}
                                />
                     </div>
-                    {/* formik.touched.empresa && formik.errors.empresa &&
+                    { props.touched.empresa && props.errors.empresa &&
                         
                         <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                             <p className="font-bold">Error</p>
-                            <p>{formik.errors.empresa}</p>
+                            <p>{props.errors.empresa}</p>
                         </div>
-                    */ }
+                     }
                     
                     <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="email">
@@ -150,17 +256,17 @@ function EditarCliente(props) {
 
                                 onChange={props.handleChange}
                                 onBlur={props.handleBlur}
-                              //  value={formik.values.email}
+                                value={props.values.email}
                                />
                     </div>
 
-                    {/* formik.touched.email && formik.errors.email &&
+                    {props.touched.email && props.errors.email &&
                         
                         <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                             <p className="font-bold">Error</p>
-                            <p>{formik.errors.email}</p>
+                            <p>{props.errors.email}</p>
                         </div>
-                    */ }
+                     }
                     <div className="mb-4">
                                 <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="telefono">
                                     Telofono
@@ -174,22 +280,22 @@ function EditarCliente(props) {
 
                                 onChange={props.handleChange}
                                 onBlur={props.handleBlur}
-                              //  value={formik.values.telefono}
+                                value={props.values.telefono}
                                />
                     </div>
-                    { /* formik.touched.telefono && formik.errors.telefono &&
+                    {  props.touched.telefono && props.errors.telefono &&
                         
                         <div className="my-2 bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
                             <p className="font-bold">Error</p>
-                            <p>{formik.errors.telefono}</p>
+                            <p>{props.errors.telefono}</p>
                         </div>
-                    */}
+                    }
 
                     <input
 
                         type="submit"
                           className="bg-gray-800 w-full mt-5  p-2 text-white uppercase hover:bg-gray-900"
-                        value="registrar cliente"
+                        value="editar cliente"
                     />
 
                     </form>
