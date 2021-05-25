@@ -47,7 +47,7 @@ const Cliente = ({cliente}) => {
     const {nombre,apellido,empresa,email,id} = cliente
 
 
-    const confrimarEliminarCliente = id => {
+    const confrimarEliminarCliente = () => {
 
         Swal.fire({
             title: 'Deseas eliminar un cliente?',
