@@ -27,9 +27,20 @@ const PedidoState = ({children}) => {
     }
 
 
+    const agregarProducto = productos => {
+        dispatch({
+            type: SELECCCIONAR_PRODUCTO,
+            payload: productos
+        })
+    }
+
+    
+
     return (
         <PedidoContext.Provider 
-        value={{agregarCliente}}
+        value={{agregarCliente,
+        agregarProducto
+        }}
         
         >
             {children}
