@@ -3,6 +3,7 @@ import Layout from '../components/Layout';
 import AsignarCliente from '../components/pedidos/AsignarCliente';
 import AsignarProducto from '../components/pedidos/AsignarProductos';
 import ResumenPedido from '../components/pedidos/ResumenPedido';
+import Total from '../components/pedidos/Total';
 
 
 import PedidoContext from '../context/pedidos/pedidoContext';
@@ -23,6 +24,14 @@ const NuevoPedido = () => {
                     <AsignarCliente/>
                     <AsignarProducto/>
                     <ResumenPedido/>
+                    <Total/>
+
+                    <button
+                        type="button"
+                        className={` bg-gray-800 w-full mt-5 p-2 text-white uppercase font-bold hover:bg-gray-900  `}
+                      //  onClick={() => crearNuevoPedido() }
+
+                    >Registrar Pedido</button>
                 </div>
             </div>
 
